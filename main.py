@@ -3,7 +3,7 @@ import subprocess
 import time
 
 
-def start_program(program_path):
+def start_program(program_path: str):
     try:
         subprocess.Popen(program_path)
         print(f"{program_path} started successfully.")
@@ -26,7 +26,7 @@ def get_all_processes():
     return all_processes
 
 
-def is_program_running(program_name):
+def is_program_running(program_name: str):
     for proc in psutil.process_iter(['name']):
         if proc.info['name'] == program_name:
             return True
@@ -34,7 +34,7 @@ def is_program_running(program_name):
 
 
 if __name__ == "__main__":
-    program_to_check = "Slack.app"
+    program_to_check = "Slack"
     try:
         while True:
             if is_program_running(program_to_check):
