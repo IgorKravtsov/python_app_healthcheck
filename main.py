@@ -1,11 +1,19 @@
+from threading import Thread
 import psutil
 import subprocess
-import time
+from sys import platform
+
+import tkinter as tk
+from tkinter import ttk
+from tkinter import filedialog as fd
+from tkinter.messagebox import showinfo
+
+from HealthChecker.healthChecker import HealthChecker
 
 
 def start_program(program_path: str):
     try:
-        subprocess.Popen(program_path)
+        subprocess.call(program_path, shell=platform == 'darwin')
         print(f"{program_path} started successfully.")
     except FileNotFoundError:
         print(f"Error: {program_path} not found.")
@@ -16,7 +24,7 @@ def start_program(program_path: str):
 def get_all_processes():
     all_processes = []
 
-    for proc in psutil.process_iter(['pid', 'name']):
+    for proc in psutil.process_iter(['pid', 'name', 'exe', 'status']):
         try:
             process_info = proc.info
             all_processes.append(process_info)
@@ -27,23 +35,40 @@ def get_all_processes():
 
 
 def is_program_running(program_name: str):
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'] == program_name:
+    for proc in psutil.process_iter(['exe']):
+        # print(proc.info)
+        if proc.info['exe'] == program_name:
             return True
-    return False
+    return True
 
+def select_file():
+    file = fd.askopenfilename(
+        title='Выбрать файл',
+        initialdir='/',
+    )
+    return file
 
 if __name__ == "__main__":
-    program_to_check = "Slack"
-    try:
-        while True:
-            if is_program_running(program_to_check):
-                print(f"{program_to_check} is running.")
-            else:
-                print(f"{program_to_check} is not running.")
-                start_program(program_to_check)
+    program_to_check = "/Applications/AnyDesk.app/Contents/MacOS/AnyDesk"
+    root = tk.Tk()
 
-            time.sleep(3)  # Wait for 3 seconds before checking again
+    root.title('Health checker')
+    root.resizable(False, False)
+    root.geometry('300x150')
 
-    except KeyboardInterrupt:
-        print("PROGRAM STOPPED!")
+    open_button = ttk.Button(
+        root,
+        text='Выберите программу',
+        command=select_file
+    )
+
+    health_checker = HealthChecker(program_to_check)
+
+    thread = Thread(target=health_checker.start_main_loop)
+    thread.start()
+
+    open_button.pack(expand=True)
+
+    root.mainloop()
+
+
